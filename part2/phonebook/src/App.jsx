@@ -15,6 +15,8 @@ const App = () => {
 	const [newName, setNewName] = useState("");
 	const [newNumber, setNumber] = useState("");
 	const [filter, setFilter] = useState("");
+	const [errorMessage, setErrorMessage] = useState(null);
+	const [successMessage, setSuccessMessage] = useState(null);
 
 	useEffect(() => {
 		getPersons()
@@ -39,23 +41,44 @@ const App = () => {
 		const personObject = {
 			name: newName,
 			number: newNumber,
+			id: existingPerson ? existingPerson.id : (persons.length + 1).toString(),
 		};
 		if (existingPerson) {
-			console.log("Updating person:", existingPerson, existingPerson.id);
-			updatePerson(existingPerson.id, personObject);
-			setPersons(
-				persons.map((person) =>
-					person.id !== existingPerson.id
-						? person
-						: { ...person, number: newNumber }
-				)
-			);
+			updatePerson(personObject.id, personObject)
+				.then((updatedPerson) => {
+					setSuccessMessage(`Updated ${updatedPerson.name}`);
+					setPersons(
+						persons.map((person) =>
+							person.id !== existingPerson.id ? person : { ...personObject }
+						)
+					);
+					setTimeout(() => {
+						setSuccessMessage(null);
+					}, 5000);
+				})
+				.catch((error) => {
+					setErrorMessage(`Failed to update ${personObject.name}`);
+					setTimeout(() => {
+						setErrorMessage(null);
+					}, 5000);
+				});
 		} else {
 			createPerson({
 				...personObject,
-				id: (persons.length + 1).toString(),
-			});
-			setPersons(persons.concat({ name: newName, number: newNumber }));
+			})
+				.then((newPerson) => {
+					setSuccessMessage(`Added ${newPerson.name}`);
+					setTimeout(() => {
+						setSuccessMessage(null);
+					}, 5000);
+					setPersons(persons.concat({ ...personObject }));
+				})
+				.catch((error) => {
+					setErrorMessage(`Failed to add ${personObject.name}`);
+					setTimeout(() => {
+						setErrorMessage(null);
+					}, 5000);
+				});
 		}
 		setNewName("");
 		setNumber("");
@@ -75,6 +98,9 @@ const App = () => {
 
 	return (
 		<div>
+			<h2>Alert Message</h2>
+			{errorMessage && <div className="error">{errorMessage}</div>}
+			{successMessage && <div className="success">{successMessage}</div>}
 			<FilterName filter={filter} handleFilterChange={handleFilterChange} />
 			<PhoneBook
 				persons={persons}

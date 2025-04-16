@@ -9,13 +9,25 @@ const getPersons = () => {
 
 const createPerson = (newPerson) => {
 	console.log("Creating person:", newPerson);
+
 	const request = axios.post(baseUrl, newPerson);
 	return request.then((response) => response.data);
 };
 
 const updatePerson = (id, newPerson) => {
-	const request = axios.put(`${baseUrl}/${id}`, newPerson);
-	return request.then((response) => response.data);
+	if (id === undefined) {
+		console.error("ID is undefined");
+		return Promise.reject("ID is undefined");
+	} else {
+		const request = axios.put(`${baseUrl}/${id}`, newPerson);
+		console.log("Updating person:", newPerson);
+		return request
+			.then((response) => response.data)
+			.catch((error) => {
+				// console.error(`Error updating person: ${newPerson.name}`, error);
+				throw error; // Re-throw the error to handle it in the calling function
+			});
+	}
 };
 
 const deletePerson = (id) => {
