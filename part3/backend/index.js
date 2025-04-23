@@ -1,10 +1,13 @@
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const bodyParser = require("body-parser");
 const morganBody = require("morgan-body");
 const morgan = require("morgan");
 
+app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static("dist"));
 morganBody(app);
 
 let persons = [
@@ -25,14 +28,14 @@ let persons = [
 	},
 	{
 		id: "4",
-		name: "Mary Poppendieck",
+		name: "Dan Nemtanu",
 		number: "39-23-6423122",
 	},
 ];
 
 // Server entry point
 app.get("/", (req, res) => {
-	res.send("<h1>Welcome to Express Server - Phonebook</h1>");
+	res.send("./dist/index.html");
 });
 // Get all persons
 app.get("/api/persons/", (req, res) => {
@@ -54,34 +57,43 @@ app.get("/api/persons/:id", (req, res) => {
 	}
 });
 
+app.put("/api/persons/:id", (req, res) => {
+	const id = req.params.id;
+	const updateData = req.body;
+
+	try {
+		persons[id] = updateData;
+		res.status(201).end();
+	} catch (error) {
+		res.status(404).end();
+	}
+});
+
 app.delete("/api/persons/:id", (req, res) => {
 	const id = req.params.id;
-	const personToDelete = persons.find((person) => person.id === id);
-	if (personToDelete) {
+	const personID = persons.findIndex((person) => person.id === id);
+	console.log("ID", personID);
+
+	try {
+		persons.splice(personID, 1);
 		res.status(204).end();
-	} else {
+	} catch {
 		res.status(404).end();
 	}
 });
 
 app.post("/api/persons", (req, res) => {
 	const body = req.body;
-	const id = (persons.length + 1).toString();
-	const existingPerson = persons.find((person) => person.name === body.name);
 	const person = {
-		id: id,
+		id: body.id,
 		name: body.name,
 		number: body.number,
 	};
 	console.log(person);
 
-	if (!body.name || !body.number || existingPerson) {
-		return res.status(400).json({
-			error: "Person already exists or missing name/number",
-		});
-	} else {
-		res.status(200).json(person);
-	}
+	persons.push(person);
+	res.status(201).end();
+	return person;
 });
 
 app.get("/info", (req, res) => {
